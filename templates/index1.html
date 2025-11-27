@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI 穿搭顧問</title>
+    <!-- 引入 Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- 引入 FontAwesome 圖示 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* 自定義字體和背景，更接近圖片風格 */
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background-color: #f5f7fa; /* 柔和的淺灰背景 */
+        }
+        .weather-card {
+            background: white;
+            border-radius: 1.5rem; /* 大圓角 */
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+        }
+        .advisor-card {
+            background: linear-gradient(to bottom right, #ffffff, #f0f4ff); /* 微漸層背景 */
+            border-radius: 1.5rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.02);
+        }
+    </style>
+</head>
+<body class="min-h-screen p-4 flex items-center justify-center font-sans text-gray-700">
+
+    <div class="w-full max-w-md mx-auto">
+        <h1 class="text-2xl font-bold text-center mb-6 text-gray-800">天氣與穿搭</h1>
+        
+        <!-- 新增：模型選擇區 (配合雲端版) -->
+        <div class="mb-4 flex flex-col items-end px-2">
+            <div class="flex items-center gap-2">
+                <label class="text-xs text-gray-500 font-bold"><i class="fa-solid fa-microchip"></i> AI 模型:</label>
+                <select id="modelSelect" class="text-sm border border-gray-300 rounded-lg px-2 py-1 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <option value="llama-3.1-8b-instant">載入中...</option>
+                </select>
+            </div>
+            <p class="text-[10px] text-gray-400 mt-1">💡 雲端版已連結 Groq 高速模型</p>
+        </div>
+
+        <!-- 搜尋區 -->
+        <div class="flex gap-2 mb-6 shadow-sm rounded-full bg-white p-1">
+            <input type="text" id="cityInput" placeholder="輸入城市 (例如: Taipei)" 
+                   class="flex-1 rounded-full px-6 py-3 focus:outline-none text-gray-600 bg-transparent">
+            <button onclick="getRecommendation()" 
+                    class="bg-blue-500 text-white p-3 rounded-full hover:bg-blue-600 transition-colors w-12 h-12 flex items-center justify-center">
+                <i class="fa-solid fa-magnifying-glass"></i>
+            </button>
+        </div>
+
+        <!-- 載入中動畫 -->
+        <div id="loading" class="hidden text-center py-10">
+            <i class="fa-solid fa-circle-notch fa-spin text-4xl text-blue-400"></i>
+            <p class="text-gray-500 mt-4 text-sm font-medium animate-pulse">AI 正在分析天氣數據...</p>
+        </div>
+
+        <!-- 結果顯示區 -->
+        <div id="result" class="hidden space-y-5">
+            
+            <div class="text-center">
+                <h2 class="text-3xl font-extrabold text-gray-800" id="cityName">--</h2>
+                <p class="text-gray-500 text-lg flex items-center justify-center gap-2 mt-1">
+                    <span id="weatherDesc">--</span>
+                </p>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <div class="weather-card p-5 flex flex-col items-center justify-center text-center bg-blue-50/50">
+                    <i class="fa-solid fa-umbrella text-blue-400 text-2xl mb-2"></i>
+                    <p class="text-xs text-gray-500 font-medium">降雨機率</p>
+                    <p class="text-xl font-bold text-gray-800"><span id="rainChance">--</span>%</p>
+                </div>
+                <div class="weather-card p-5 flex flex-col items-center justify-center text-center bg-orange-50/50">
+                    <i class="fa-solid fa-temperature-half text-orange-400 text-2xl mb-2"></i>
+                    <p class="text-xs text-gray-500 font-medium">體感溫度</p>
+                    <p class="text-xl font-bold text-gray-800"><span id="feelsLike">--</span>°</p>
+                </div>
+                <div class="weather-card p-5 flex flex-col items-center justify-center text-center bg-teal-50/50">
+                    <i class="fa-solid fa-droplet text-teal-400 text-2xl mb-2"></i>
+                    <p class="text-xs text-gray-500 font-medium">濕度</p>
+                    <p class="text-xl font-bold text-gray-800"><span id="humidity">--</span>%</p>
+                </div>
+                <div class="weather-card p-5 flex flex-col items-center justify-center text-center bg-indigo-50/50">
+                    <i class="fa-solid fa-wind text-indigo-400 text-2xl mb-2"></i>
+                    <p class="text-xs text-gray-500 font-medium">風速</p>
+                    <p class="text-xl font-bold text-gray-800"><span id="windSpeed">--</span> <span class="text-xs">級</span></p>
+                </div>
+            </div>
+
+            <div class="advisor-card p-6 relative overflow-hidden">
+                <div class="absolute -top-10 -right-10 w-32 h-32 bg-purple-100 rounded-full opacity-50"></div>
+
+                <div class="flex items-center gap-3 mb-4 relative z-10">
+                    <div class="bg-indigo-100 p-2 rounded-full">
+                        <i class="fa-solid fa-shirt text-indigo-600 text-xl"></i>
+                    </div>
+                    <h3 class="font-bold text-lg text-gray-800">穿衣顧問</h3>
+                </div>
+                
+                <div id="aiAdvice" class="text-gray-700 leading-relaxed text-[15px] relative z-10 whitespace-pre-line">
+                    <!-- AI 建議內容 -->
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        // 頁面載入時，自動抓取後端提供的模型列表
+        window.onload = async function() {
+            try {
+                const response = await fetch('/models');
+                const models = await response.json();
+                const select = document.getElementById('modelSelect');
+                select.innerHTML = ''; // 清空預設選項
+
+                models.forEach(model => {
+                    const option = document.createElement('option');
+                    option.value = model;
+                    option.text = model;
+                    // 預設選取 Llama 3.1 8B (速度最快)
+                    if (model.includes('8b-instant')) {
+                        option.selected = true;
+                    }
+                    select.appendChild(option);
+                });
+            } catch (e) {
+                console.error("無法載入模型列表", e);
+                // 如果失敗，至少留一個預設選項
+                document.getElementById('modelSelect').innerHTML = '<option value="llama-3.1-8b-instant">Llama 3.1 (Default)</option>';
+            }
+        };
+
+        // 綁定 Enter 鍵搜尋
+        document.getElementById("cityInput").addEventListener("keypress", function(event) {
+            if (event.key === "Enter") {
+                event.preventDefault();
+                getRecommendation();
+            }
+        });
+
+        async function getRecommendation() {
+            const city = document.getElementById('cityInput').value;
+            const model = document.getElementById('modelSelect').value; // 取得選中的模型
+            const loading = document.getElementById('loading');
+            const result = document.getElementById('result');
+            
+            if (!city) return alert("請輸入城市名稱！");
+
+            // UI 切換
+            result.classList.add('hidden');
+            loading.classList.remove('hidden');
+
+            try {
+                const formData = new FormData();
+                formData.append('city', city);
+                formData.append('model', model); // 傳送模型參數給後端
+
+                const response = await fetch('/recommend', {
+                    method: 'POST', body: formData
+                });
+                const data = await response.json();
+
+                if (data.error) {
+                    alert(data.error);
+                } else {
+                    // 更新數據
+                    document.getElementById('cityName').textContent = data.weather.city;
+                    document.getElementById('weatherDesc').innerHTML = `<i class="fa-solid fa-cloud"></i> ${data.weather.description}`;
+                    document.getElementById('rainChance').textContent = data.weather.rain_chance;
+                    document.getElementById('feelsLike').textContent = data.weather.feels_like;
+                    document.getElementById('humidity').textContent = data.weather.humidity;
+                    document.getElementById('windSpeed').textContent = data.weather.wind_speed;
+                    
+                    // 更新 AI 建議
+                    document.getElementById('aiAdvice').textContent = data.advice;
+
+                    // 顯示結果
+                    result.classList.remove('hidden');
+                }
+            } catch (error) {
+                console.error(error);
+                alert("發生錯誤，請稍後再試。確認後端是否執行中。");
+            } finally {
+                loading.classList.add('hidden');
+            }
+        }
+    </script>
+</body>
+</html>
