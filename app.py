@@ -174,7 +174,7 @@ def get_ai_recommendation(weather, model_name):
         model_name = "llama-3.1-8b-instant"
 
     prompt = f"""
-    你是一位貼心專業的穿搭顧問。
+    你是一位貼心專業的穿搭顧問，根據天氣數據提供穿搭建議。
     數據:
     地點: {weather['city']}
     氣溫: {weather['temp']} (體感 {weather['feels_like']})
@@ -215,4 +215,5 @@ def recommend():
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))
     app.run(host='0.0.0.0', port=port)
+
 
