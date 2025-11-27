@@ -20,7 +20,7 @@ CWA_API_KEY = os.environ.get("CWA_API_KEY", "CWA-E9D51C81-8614-4973-AC00-B6714CB
 
 # 2. Groq API Key
 # 建議在 Render 的 Environment Variables 設定
-GROQ_API_KEY = os.environ.get("GROQ_API_KEY", "請填入你的_GROQ_API_KEY")
+GROQ_API_KEY = os.environ.get("GROQ_API_KEY", "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")
 # ==========================================
 
 # 初始化 Groq 客戶端
@@ -215,3 +215,4 @@ def recommend():
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))
     app.run(host='0.0.0.0', port=port)
+
