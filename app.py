@@ -182,7 +182,6 @@ def get_ai_recommendation(weather, model_name):
     風力: {weather['wind_speed']}級
     天氣狀況: {weather['description']}
     
-    請用繁體中文給一段80字建議。降雨機率高要帶傘。體感低要防風。語氣要非常親切，像朋友一樣。
     """
     
     try:
@@ -215,5 +214,6 @@ def recommend():
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))
     app.run(host='0.0.0.0', port=port)
+
 
 
