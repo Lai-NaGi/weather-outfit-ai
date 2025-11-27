@@ -4,6 +4,11 @@ from flask import Flask, render_template, request, jsonify
 import math
 # 引入 Groq 套件
 from groq import Groq
+# 引入 urllib3 來關閉 SSL 警告
+import urllib3
+
+# 禁用 SSL 警告 (因為我們要忽略氣象局的憑證錯誤)
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 app = Flask(__name__)
 
@@ -15,7 +20,7 @@ CWA_API_KEY = os.environ.get("CWA_API_KEY", "CWA-E9D51C81-8614-4973-AC00-B6714CB
 
 # 2. Groq API Key
 # 建議在 Render 的 Environment Variables 設定
-GROQ_API_KEY = os.environ.get("GROQ_API_KEY", "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")
+GROQ_API_KEY = os.environ.get("GROQ_API_KEY", "請填入你的_GROQ_API_KEY")
 # ==========================================
 
 # 初始化 Groq 客戶端
@@ -41,7 +46,8 @@ def get_rain_chance(county_name):
     params = {"Authorization": CWA_API_KEY, "format": "JSON", "locationName": county_name}
     
     try:
-        response = requests.get(url, params=params)
+        # verify=False: 忽略 SSL 憑證驗證，解決 Render 連不上氣象局的問題
+        response = requests.get(url, params=params, verify=False)
         data = response.json()
         if "records" in data and "location" in data['records']:
             all_locs = data['records']['location']
@@ -79,7 +85,8 @@ def get_weather_data(user_input):
         # 👇 除錯訊息：檢查 Key 是否正確讀取
         print(f"DEBUG: 正在向氣象局請求資料... (Key前幾碼: {CWA_API_KEY[:5]}...)") 
         
-        response = requests.get(url, params=params)
+        # verify=False: 忽略 SSL 憑證驗證
+        response = requests.get(url, params=params, verify=False)
         
         # 👇 除錯訊息：檢查連線狀態
         if response.status_code != 200:
